@@ -1,0 +1,6 @@
+setwd('/Users/ivanliu/Downloads/Expedia_kaggle/expedia-hotel-recommendations')
+library(data.table)
+train <- fread('../data/train.csv')
+test <- fread('../data/test.csv')
+destination <- fread('../data/destinations.csv')
+submit <- fread('../data/sample_submission.csv')
