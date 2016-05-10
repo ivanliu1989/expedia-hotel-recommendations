@@ -54,19 +54,73 @@ train
     # d1-d149
 
 # 6. data leak
-
-
-
-
-
-
-
-
-
-
-
-
-
+    append_1 <- 3 + 17 * is_booking
+    append_2 <- 1 + 5 * is_booking
+    best_hotels_od_ulc <- data.frame(user_location_city = -1, orig_destination_distance = -1, hotel_cluster = -1, score = -1)
+    best_hotels_search_dest <- data.frame(srch_destination_id = -1, hotel_country = -1, hotel_market = -1, hotel_cluster = -1, score = -1)
+    best_hotels_search_dest1 <- data.frame(srch_destination_id = -1, hotel_cluster = -1, score = -1)
+    best_hotel_country <- data.frame(hotel_country = -1, hotel_cluster = -1, score = -1)
+    popular_hotel_cluster <- data.frame(hotel_cluster = -1, score = -1)
+    
+    # train mapping
+    for(r in 1:nrow(train)){
+        if(r %% 100000 == 0) cat(paste0(i, ' /n'))
+        book_year <- train_sample[r, srch_year]
+        user_location_city <- train_sample[r, user_location_city]
+        orig_destination_distance <- train_sample[r, orig_destination_distance]
+        srch_destination_id <- train_sample[r, srch_destination_id]
+        is_booking <- train_sample[r, is_booking]
+        hotel_country <- train_sample[r, hotel_country]
+        hotel_market <- train_sample[r, hotel_market]
+        hotel_cluster <- train_sample[r, hotel_cluster]
+        
+        # 6.1 best_hotels_od_ulc
+        if(!is.na(user_location_city)&!is.na(orig_destination_distance)) 
+            best_hotels_od_ulc <- rbind(best_hotels_od_ulc, c(user_location_city, orig_destination_distance, hotel_cluster, 1))
+        
+        # 6.2 best_hotels_search_dest
+        if(!is.na(srch_destination_id)&!is.na(hotel_country)&!is.na(hotel_market)&book_year==2014) 
+            best_hotels_search_dest <- rbind(best_hotels_search_dest, c(srch_destination_id, hotel_country, hotel_market, hotel_cluster, append_1))
+        
+        # 6.3 best_hotels_search_dest1
+        if(!is.na(srch_destination_id)) 
+            best_hotels_search_dest1 <- rbind(best_hotels_search_dest1, c(srch_destination_id, hotel_cluster, append_1))
+        
+        # 6.4 best_hotel_country
+        if(!is.na(hotel_country)) 
+            best_hotel_country <- rbind(best_hotel_country, c(hotel_country, hotel_cluster, append_2))
+        
+        popular_hotel_cluster <- rbind(popular_hotel_cluster, c(hotel_cluster, 1))
+    }
+    best_hotels_od_ulc <- best_hotels_od_ulc[best_hotels_od_ulc$orig_destination_distance != -1, ]
+    best_hotels_od_ulc <- as.data.table(best_hotels_od_ulc)
+    best_hotels_od_ulc2 <- best_hotels_od_ulc[, score := sum(score), by = .(user_location_city, orig_destination_distance, hotel_cluster)]
+    
+    # test mapping
+    submission <- data.frame(id = -1, hotel_cluster = -1)
+    for(r in 1:nrow(test)){
+        if(r %% 100000 == 0) cat(paste0(i, ' /n'))
+        user_location_city <- train_sample[r, user_location_city]
+        orig_destination_distance <- train_sample[r, orig_destination_distance]
+        srch_destination_id <- train_sample[r, srch_destination_id]
+        hotel_country <- train_sample[r, hotel_country]
+        hotel_market <- train_sample[r, hotel_market]
+        
+        # s1 <- c(user_location_city, orig_destination_distance)
+        pred_s1 <- best_hotels_od_ulc[best_hotels_od_ulc$user_location_city == user_location_city & best_hotels_od_ulc$orig_destination_distance == orig_destination_distance, ]
+        
+        # s2 <- c(srch_destination_id, hotel_country, hotel_market)
+        pred_s2 <- best_hotels_search_dest[best_hotels_search_dest$srch_destination_id == srch_destination_id & best_hotels_search_dest$hotel_country == hotel_country & best_hotels_search_dest$hotel_market == hotel_market, ]
+        pred_s2_2 <- best_hotels_search_dest1[best_hotels_search_dest1$srch_destination_id == srch_destination_id, ]
+        
+        # s3 <- hotel_country
+        pred_s3 <- best_hotel_country[best_hotel_country$hotel_country == hotel_country, ]
+        
+        # final prediction
+        pred <- c(pred_s1, pred_s2, pred_s2_2, pred_s3)[1:5]
+        submission <- rbind(submission, pred)
+    }
+    
 
 # is_booking is always to be 1 in test
 # test user ids is a subset of train user ids
