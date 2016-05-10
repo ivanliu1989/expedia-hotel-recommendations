@@ -54,6 +54,9 @@ train
     # d1-d149
 
 # 6. data leak
+    leaky_cols <- c('user_location_country', 'user_location_region', 'user_location_city', 'hotel_market', 'orig_destination_distance')
+    target_col <- 'hotel_cluster'
+    
     append_1 <- 3 + 17 * is_booking
     append_2 <- 1 + 5 * is_booking
     best_hotels_od_ulc <- data.frame(user_location_city = -1, orig_destination_distance = -1, hotel_cluster = -1, score = -1)
