@@ -25,13 +25,16 @@ train_leaky_1 <- train_leaky[is_booking == 1]
 train_leaky_1 <- train_leaky_1[, is_booking := NULL]
 test_leaky <- test[,.(id, user_location_country, user_location_region, user_location_city, hotel_market, orig_destination_distance)]
 
-train_leaky_1 <- train_leaky_1[base:::order(user_location_country, user_location_region, user_location_city, hotel_market, orig_destination_distance, -hotel_cluster)]
+train_leaky_1 <- train_leaky_1[base:::order(user_location_country, user_location_region, user_location_city, hotel_market, orig_destination_distance, -leaky_1)]
+train_leaky_1[, id := paste0(user_location_country, user_location_region, user_location_city, hotel_market, orig_destination_distance)]
+train_leaky_1[, ranks := rank(-leaky_1), by = id]
+train_leaky_1[id == 6634848862637712.1594]
 
-predict <- data.frame(id = -1, hotel_cluster_1 = -1, hotel_cluster_2 = -1, hotel_cluster_3 = -1, hotel_cluster_4 = -1, hotel_cluster_5 = -1)
-for(r in 1:nrow(test_leaky)){
-    res <- train_leaky_1[user_location_city == test_leaky[r,user_location_city] & orig_destination_distance == test_leaky[r,orig_destination_distance]]
-    if(nrow(res)>0){
-        predict <- rbind(predict, c(test_leaky[r, id], res[1,hotel_cluster], res[2,hotel_cluster], res[3,hotel_cluster], res[4,hotel_cluster], res[5,hotel_cluster]))
-        cat(paste0(r, ': ', res[,hotel_cluster], ' \n', res[,leaky_1], ' \n'))
-    }
-}
+# predict <- data.frame(id = -1, hotel_cluster_1 = -1, hotel_cluster_2 = -1, hotel_cluster_3 = -1, hotel_cluster_4 = -1, hotel_cluster_5 = -1)
+# for(r in 1:nrow(test_leaky)){
+#     res <- train_leaky_1[user_location_city == test_leaky[r,user_location_city] & orig_destination_distance == test_leaky[r,orig_destination_distance]]
+#     if(nrow(res)>0){
+#         predict <- rbind(predict, c(test_leaky[r, id], res[1,hotel_cluster], res[2,hotel_cluster], res[3,hotel_cluster], res[4,hotel_cluster], res[5,hotel_cluster]))
+#         cat(paste0(r, ': ', res[,hotel_cluster], ' \n', res[,leaky_1], ' \n'))
+#     }
+# }
